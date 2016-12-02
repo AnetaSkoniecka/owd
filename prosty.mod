@@ -9,9 +9,12 @@ set KATEGORIE;
 set PRODUKTY;
 set POLPRODUKTY_D;
 set POLPRODUKTY_K;
+set ILOSC;
 
 param dostepnosc_surowca {s in SUROWCE};
+param limity {s in SUROWCE, i in ILOSC};
 param cena_surowca_s {s in SUROWCE};
+param cena_przetworzenia_surowca {s in SUROWCE, i in ILOSC};
 param ilosc_polproduktu_d_na_surowiec {s in SUROWCE, d in POLPRODUKTY_D};
 param przygotowalnia_przepustowosc;
 param ilosc_polproduktu_k_na_polprodukt_d {d in POLPRODUKTY_D, k in POLPRODUKTY_K};
@@ -23,6 +26,8 @@ param cena_sprzedazy_produktu_p {p in PRODUKTY};
 param cena_pracy_uwodornienia;
 
 var wykorzystanie_s {s in SUROWCE} integer >= 0;
+var wykorzystanie_s_ilosc {s in SUROWCE, i in ILOSC} integer >= 0;
+var uzycie_s2 {1..2} binary;
 var koszt_wykorzystania_s {s in SUROWCE} integer >= 0;
 var wytworzone_polprodukty_d {d in POLPRODUKTY_D} integer >= 0;
 var wytworzone_polprodukty_d_na_k {d in POLPRODUKTY_D} integer >= 0;
@@ -44,9 +49,29 @@ var dochod >= 0;
 # 	dostepnosc surowca s
 subject to max_wykorzystanie_s {s in SUROWCE}: dostepnosc_surowca[s] >= wykorzystanie_s[s];
 
+#	###################
+# 	podzial wykorzystania surowca w zaleznosci od wykorzystanej ilosci
+subject to podzial_surowca {s in SUROWCE}: sum {i in ILOSC} wykorzystanie_s_ilosc[s,i] = wykorzystanie_s[s];
+
+#	###################
+# 	warunki podzialu kosztow surowca dla S1
+subject to limit1_s1: wykorzystanie_s_ilosc['S1','I1'] <= limity['S1', 'I1'];							# ceny rosna wiec nie
+subject to limit2_s1: wykorzystanie_s_ilosc['S1','I2'] <= limity['S1', 'I2'] - limity['S1', 'I1'];	# trzeba wiecej warunkow
+
+#	###################
+# 	warunki podzialu kosztow surowca dla S2
+subject to limit1_s2: limity['S2', 'I1'] * uzycie_s2[1] <= wykorzystanie_s_ilosc['S2','I1'];
+subject to limit2_s2: wykorzystanie_s_ilosc['S2','I1'] <= limity['S2', 'I1'];
+subject to limit3_s2: (limity['S2', 'I2'] - limity['S2', 'I1']) * uzycie_s2[2] <= wykorzystanie_s_ilosc['S2','I2'];
+subject to limit4_s2: wykorzystanie_s_ilosc['S2','I2'] <= (limity['S2', 'I2'] - limity['S2', 'I1']) * uzycie_s2[1];
+subject to limit5_s2: wykorzystanie_s_ilosc['S2','I3'] <= 9999999 * uzycie_s2[2];
+
 #	################### *****
 # 	koszt wykorzystania surowca s
-subject to ile_kosztuje_wykrozystanie_s {s in SUROWCE}: koszt_wykorzystania_s[s] = wykorzystanie_s[s] * (cena_surowca_s[s] + 8);
+subject to ile_kosztuje_wykrozystanie_s {s in SUROWCE}: koszt_wykorzystania_s[s] = 
+			wykorzystanie_s[s] * cena_surowca_s[s]
+		+	sum {i in ILOSC} (wykorzystanie_s_ilosc[s,i] * cena_przetworzenia_surowca[s, i])
+	;
 
 #	###################
 # 	ilosc wytworzonych polproduktow d
@@ -100,7 +125,7 @@ wytworzone_polprodukty_d_na_k[d]);
 subject to licz_koszt_calkowity: koszt = 
 		(sum {s in SUROWCE} koszt_wykorzystania_s[s]) 		# koszt zakupy surowca ( + cena koszt przerobu *)
 	+	koszt_uwodornienia 									# koszt pracy zakladu uwodornienia
-	;
+;
 
 ##################################################################################################
 # FUNKCJA CELU
@@ -118,6 +143,7 @@ solve;
 
 display koszt_wykorzystania_s;
 display wykorzystanie_s;
+display wykorzystanie_s_ilosc;
 display wytworzone_polprodukty_d;
 display wytworzone_polprodukty_d_na_k;
 display wytworzone_polprodukty_d_na_p;

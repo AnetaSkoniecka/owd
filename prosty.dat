@@ -3,14 +3,27 @@ set KATEGORIE:= KAT1 KAT2 KAT3;
 set PRODUKTY:= P1 P2 P3;
 set POLPRODUKTY_D:= D1 D2 D3;
 set POLPRODUKTY_K:= K1 K2;
+set ILOSC:= I1 I2 I3;
 
 param dostepnosc_surowca := 
 S1	12000
 S2	10000;
 
+param limity :
+	I1		I2		I3			:=
+S1	2282	6849	999999999
+S2	2279	6625	999999999
+;
+
 param cena_surowca_s :=
 S1	130
 S2	120;
+
+param cena_przetworzenia_surowca :
+	I1	I2	I3 :=
+S1	8	11	13
+S2	19	13	9
+;
 
 param ilosc_polproduktu_d_na_surowiec:
 	D1 	D2 	D3 	:=
