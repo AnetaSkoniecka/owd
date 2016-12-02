@@ -24,6 +24,7 @@ param mozliwosc_produkcji_p_z_d {d in POLPRODUKTY_D, p in PRODUKTY};
 param mozliwosc_produkcji_p_z_k {k in POLPRODUKTY_K, p in PRODUKTY};
 param cena_sprzedazy_produktu_p {p in PRODUKTY};
 param cena_pracy_uwodornienia;
+param minimalne_zamowienie;
 
 var wykorzystanie_s {s in SUROWCE} integer >= 0;
 var wykorzystanie_s_ilosc {s in SUROWCE, i in ILOSC} integer >= 0;
@@ -126,6 +127,10 @@ subject to licz_koszt_calkowity: koszt =
 		(sum {s in SUROWCE} koszt_wykorzystania_s[s]) 		# koszt zakupy surowca ( + cena koszt przerobu *)
 	+	koszt_uwodornienia 									# koszt pracy zakladu uwodornienia
 ;
+
+#	###################
+# 	minimalnie trzeba tyle wyprodukowac (uwaga to potem bedzie kryterium a nie ograniczenie)
+subject to minm_zamowienie {p in PRODUKTY}: wytworzone_produkty[p] >= minimalne_zamowienie;
 
 ##################################################################################################
 # FUNKCJA CELU
