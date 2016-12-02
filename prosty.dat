@@ -1,0 +1,51 @@
+set SUROWCE:= S1 S2;
+set KATEGORIE:= KAT1 KAT2 KAT3;
+set PRODUKTY:= P1 P2 P3;
+set POLPRODUKTY_D:= D1 D2 D3;
+set POLPRODUKTY_K:= K1 K2;
+
+param dostepnosc_surowca := 
+S1	12000
+S2	10000;
+
+param cena_surowca_s :=
+S1	130
+S2	120;
+
+param ilosc_polproduktu_d_na_surowiec:
+	D1 	D2 	D3 	:=
+S1	0.6	0.3	0.1
+S2	0.2	0.5	0.3
+;
+
+param przygotowalnia_przepustowosc := 13674;
+
+param ilosc_polproduktu_k_na_polprodukt_d:
+	K1 	K2 	:=
+D1	0	0
+D2	0.3	0.7
+D3	0.3	0.7
+;
+
+param uwodornienia_przepustowosc := 7533;
+
+param koszt_pracy_uwodornienia := 11000;
+
+param mozliwosc_produkcji_p_z_d:
+	P1 		P2		P3 	:=
+D1	9999999	0		9999999
+D2	0		9999999	0
+D3	0		9999999	0
+;
+
+param mozliwosc_produkcji_p_z_k:
+	P1 		P2	P3 	:=
+K1	9999999	0	9999999
+K2	9999999	0	9999999
+;
+
+param cena_sprzedazy_produktu_p :=
+P1	157
+P2	122
+P3	92
+;
