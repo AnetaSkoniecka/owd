@@ -49,3 +49,5 @@ P1	157
 P2	122
 P3	92
 ;
+
+param cena_pracy_uwodornienia := 11000;
