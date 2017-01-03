@@ -5,7 +5,6 @@ reset;
 ##################################################################################################
 
 set SUROWCE;
-set KATEGORIE;
 set PRODUKTY;
 set POLPRODUKTY_D;
 set POLPRODUKTY_K;
@@ -19,12 +18,14 @@ param ilosc_polproduktu_d_na_surowiec {s in SUROWCE, d in POLPRODUKTY_D};
 param przygotowalnia_przepustowosc;
 param ilosc_polproduktu_k_na_polprodukt_d {d in POLPRODUKTY_D, k in POLPRODUKTY_K};
 param uwodornienia_przepustowosc;
-param koszt_pracy_uwodornienia;
 param mozliwosc_produkcji_p_z_d {d in POLPRODUKTY_D, p in PRODUKTY};
 param mozliwosc_produkcji_p_z_k {k in POLPRODUKTY_K, p in PRODUKTY};
 param cena_sprzedazy_produktu_p {p in PRODUKTY};
 param cena_pracy_uwodornienia;
 param minimalne_zamowienie;
+param odniesienia_koszt_produkcji;
+param odniesienia_wzgledny_niedobor {p in PRODUKTY};
+param max_koszt;
 
 var wykorzystanie_s {s in SUROWCE} integer >= 0;
 var wykorzystanie_s_ilosc {s in SUROWCE, i in ILOSC} integer >= 0;
@@ -40,7 +41,19 @@ var wytworzone_produkty {p in PRODUKTY} integer >= 0;
 var koszt_uwodornienia >= 0;
 var uwodornienie_pracuje binary;
 var koszt >= 0;
-var dochod >= 0;
+var przychod >= 0;
+
+	# metoda punktu odniesienia
+var odl_koszt;
+var odl_niedobor {p in PRODUKTY};
+var odl;
+param lambda_koszt;
+param lambda_niedobor {p in PRODUKTY};
+param epsilon;
+param beta;
+var v;
+var z_niedobor  {p in PRODUKTY};
+var z_koszty;
 
 ##################################################################################################
 # OGRANICZENIA
@@ -69,7 +82,7 @@ subject to limit5_s2: wykorzystanie_s_ilosc['S2','I3'] <= 9999999 * uzycie_s2[2]
 
 #	################### *****
 # 	koszt wykorzystania surowca s
-subject to ile_kosztuje_wykrozystanie_s {s in SUROWCE}: koszt_wykorzystania_s[s] = 
+subject to ile_kosztuje_wykorzystanie_s {s in SUROWCE}: koszt_wykorzystania_s[s] = 
 			wykorzystanie_s[s] * cena_surowca_s[s]
 		+	sum {i in ILOSC} (wykorzystanie_s_ilosc[s,i] * cena_przetworzenia_surowca[s, i])
 	;
@@ -112,8 +125,8 @@ subject to produkcja_k_na_p {k in POLPRODUKTY_K, p in PRODUKTY}: wykorzystanie_p
 subject to ile_produktow_wytworzono {p in PRODUKTY}: wytworzone_produkty[p] = (sum {k in POLPRODUKTY_K} wykorzystanie_polproduktu_k_na_p[k,p]) + (sum {d in POLPRODUKTY_D} wykorzystanie_polproduktu_d_na_p[d,p]);
 
 #	###################
-# 	jaki dochod z wytworzonych produktow
-subject to licz_dochod: dochod = sum {p in PRODUKTY} wytworzone_produkty[p] * cena_sprzedazy_produktu_p[p];
+# 	jaki przychod z wytworzonych produktow
+subject to licz_przychod: przychod = sum {p in PRODUKTY} wytworzone_produkty[p] * cena_sprzedazy_produktu_p[p];
 
 #	###################
 # 	wyliczenie kosztu uwodornienia
@@ -126,17 +139,45 @@ wytworzone_polprodukty_d_na_k[d]);
 subject to licz_koszt_calkowity: koszt = 
 		(sum {s in SUROWCE} koszt_wykorzystania_s[s]) 		# koszt zakupy surowca ( + cena koszt przerobu *)
 	+	koszt_uwodornienia 									# koszt pracy zakladu uwodornienia
+	#+ cena_pracy_uwodornienia
 ;
 
 #	###################
+#	WYLACZONE
 # 	minimalnie trzeba tyle wyprodukowac (uwaga to potem bedzie kryterium a nie ograniczenie)
-subject to minm_zamowienie {p in PRODUKTY}: wytworzone_produkty[p] >= minimalne_zamowienie;
+#subject to minm_zamowienie {p in PRODUKTY}: wytworzone_produkty[p] >= minimalne_zamowienie;
+
+#	###################
+# 	odleglosci od pkt aspiracji
+subject to licz_odl_koszt: odl_koszt = koszt - odniesienia_koszt_produkcji;
+subject to licz_odl_niedobor {p in PRODUKTY}: odl_niedobor[p] = 
+	(minimalne_zamowienie - wytworzone_produkty[p])/minimalne_zamowienie - odniesienia_wzgledny_niedobor[p];
+
+#	###################
+# 	model do pkt odniesienia
+subject to licz_odl: odl = v + epsilon * ((sum {p in PRODUKTY} z_niedobor[p]) + z_koszty);
+subject to ogr_v_przez_z_koszty: v <= z_koszty;
+subject to ogr_v_przez_z_niedobory {p in PRODUKTY}: v <= z_niedobor[p];
+subject to ogr_z_przez_koszty_z_krokiem: z_koszty <= beta * lambda_koszt * (koszt - odniesienia_koszt_produkcji);
+subject to ogr_z_przez_niedobor_z_krokiem {p in PRODUKTY}: z_niedobor[p] <= beta * lambda_niedobor[p] * odl_niedobor[p];
+subject to ogr_z_przez_koszty: z_koszty <= lambda_koszt * (koszt - odniesienia_koszt_produkcji);
+subject to ogr_z_przez_niedobor {p in PRODUKTY}: z_niedobor[p] <= lambda_niedobor[p] * odl_niedobor[p];
+
+maximize f_celu: odl;
+
+##################################################################################################
+# DODATKOWA FUNKCJA CELU
+##################################################################################################
+
+#maximize max_koszt: koszt;
 
 ##################################################################################################
 # FUNKCJA CELU
 ##################################################################################################
 
-maximize total_zysk: dochod - koszt;
+var zysk;
+subject to licz_zysk: zysk = przychod - koszt;
+#maximize total_zysk: przychod - koszt;
 
 ##################################################################################################
 # KONFIGIURACJA
@@ -156,8 +197,13 @@ display wytworzone_polprodukty_k;
 display wykorzystanie_polproduktu_k_na_p;
 display wykorzystanie_polproduktu_d_na_p;
 display wytworzone_produkty;
-display dochod;
+display zysk;
+display przychod;
 display koszt;
 display koszt_uwodornienia;
-display total_zysk;
+#display total_zysk;
+#display max_koszt;
+display odl_koszt;
+display odl_niedobor;
+display odl;
 ##################################################################################################

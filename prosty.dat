@@ -1,5 +1,4 @@
 set SUROWCE:= S1 S2;
-set KATEGORIE:= KAT1 KAT2 KAT3;
 set PRODUKTY:= P1 P2 P3;
 set POLPRODUKTY_D:= D1 D2 D3;
 set POLPRODUKTY_K:= K1 K2;
@@ -42,8 +41,6 @@ D3	0.3	0.7
 
 param uwodornienia_przepustowosc := 7533;
 
-param koszt_pracy_uwodornienia := 11000;
-
 param mozliwosc_produkcji_p_z_d:
 	P1 		P2		P3 	:=
 D1	9999999	0		9999999
@@ -66,3 +63,25 @@ P3	92
 param cena_pracy_uwodornienia := 11000;
 
 param minimalne_zamowienie := 1717;
+
+param odniesienia_koszt_produkcji := 0;
+
+param odniesienia_wzgledny_niedobor :=
+P1	0
+P2	0
+P3	0
+;
+
+param max_koszt = 1959130;
+
+param lambda_koszt = -0.0000005; #-1 / 1959130;
+
+param lambda_niedobor = 
+P1	-1 
+P2	-1
+P3	-1
+;
+
+param epsilon = 0.0001;
+
+param beta = 1;
