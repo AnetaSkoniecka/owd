@@ -29,6 +29,7 @@ param max_koszt;
 
 var wykorzystanie_s {s in SUROWCE} >= 0;
 var wykorzystanie_s_ilosc {s in SUROWCE, i in ILOSC} >= 0;
+var uzycie_s1 {1..2} binary;
 var uzycie_s2 {1..2} binary;
 var koszt_wykorzystania_s {s in SUROWCE} >= 0;
 var wytworzone_polprodukty_d {d in POLPRODUKTY_D} >= 0;
@@ -42,6 +43,7 @@ var koszt_uwodornienia >= 0;
 var uwodornienie_pracuje binary;
 var koszt >= 0;
 var przychod >= 0;
+var zysk;
 
 	# metoda punktu odniesienia
 var odl_koszt;
@@ -69,8 +71,11 @@ subject to podzial_surowca {s in SUROWCE}: sum {i in ILOSC} wykorzystanie_s_ilos
 
 #	###################
 # 	warunki podzialu kosztow surowca dla S1
-subject to limit1_s1: wykorzystanie_s_ilosc['S1','I1'] <= limity['S1', 'I1'];							# ceny rosna wiec nie
-subject to limit2_s1: wykorzystanie_s_ilosc['S1','I2'] <= limity['S1', 'I2'] - limity['S1', 'I1'];	# trzeba wiecej warunkow
+subject to limit1_s1: wykorzystanie_s_ilosc['S1','I1'] <= limity['S1', 'I1'];						
+subject to limit2_s1: wykorzystanie_s_ilosc['S1','I2'] <= (limity['S1', 'I2'] - limity['S1', 'I1']) * uzycie_s1[1];;	
+subject to limit3_s1: limity['S1', 'I1'] * uzycie_s1[1] <= wykorzystanie_s_ilosc['S1','I1'];
+subject to limit4_s1: (limity['S1', 'I2'] - limity['S1', 'I1']) * uzycie_s1[2] <= wykorzystanie_s_ilosc['S1','I2'];
+subject to limit5_s1: wykorzystanie_s_ilosc['S1','I3'] <= 99999999 * uzycie_s1[2];
 
 #	###################
 # 	warunki podzialu kosztow surowca dla S2
@@ -78,7 +83,7 @@ subject to limit1_s2: limity['S2', 'I1'] * uzycie_s2[1] <= wykorzystanie_s_ilosc
 subject to limit2_s2: wykorzystanie_s_ilosc['S2','I1'] <= limity['S2', 'I1'];
 subject to limit3_s2: (limity['S2', 'I2'] - limity['S2', 'I1']) * uzycie_s2[2] <= wykorzystanie_s_ilosc['S2','I2'];
 subject to limit4_s2: wykorzystanie_s_ilosc['S2','I2'] <= (limity['S2', 'I2'] - limity['S2', 'I1']) * uzycie_s2[1];
-subject to limit5_s2: wykorzystanie_s_ilosc['S2','I3'] <= 9999999 * uzycie_s2[2];
+subject to limit5_s2: wykorzystanie_s_ilosc['S2','I3'] <= 99999999 * uzycie_s2[2];
 
 #	################### *****
 # 	koszt wykorzystania surowca s
@@ -131,10 +136,10 @@ subject to licz_przychod: przychod = sum {p in PRODUKTY} wytworzone_produkty[p] 
 #	###################
 # 	wyliczenie kosztu uwodornienia
 subject to licz_koszt_uwodornienia: koszt_uwodornienia = cena_pracy_uwodornienia * uwodornienie_pracuje;
-#subject to kiedy_uwodornienie_pracuje: 9999999 * uwodornienie_pracuje >= (sum {d in POLPRODUKTY_D}
-#wytworzone_polprodukty_d_na_k[d]); 
+subject to kiedy_uwodornienie_pracuje: 99999999 * uwodornienie_pracuje >= (sum {d in POLPRODUKTY_D}
+										wytworzone_polprodukty_d_na_k[d]); 
 subject to kiedy_uwodornienie_pracuje2: uwodornienie_pracuje <= (sum {d in POLPRODUKTY_D}
-wytworzone_polprodukty_d_na_k[d]) * 99999999;
+wytworzone_polprodukty_d_na_k[d]) * 999999999;
 
 #	###################
 # 	jakie koszta calkowite
@@ -157,29 +162,27 @@ subject to licz_odl_niedobor {p in PRODUKTY}: odl_niedobor[p] =
 
 #	###################
 # 	model do pkt odniesienia
-subject to licz_odl: odl = v; # + 0.0000001 * ((sum {p in PRODUKTY} z_niedobor[p]) + z_koszty);
+subject to licz_odl: odl = v + 0.0000001 * ((sum {p in PRODUKTY} z_niedobor[p]) + z_koszty);
 subject to ogr_v_przez_z_koszty: v <= z_koszty;
 subject to ogr_v_przez_z_niedobory {p in PRODUKTY}: v <= z_niedobor[p];
-#subject to ogr_z_przez_koszty_z_krokiem: z_koszty <= beta * lambda_koszt * (koszt - odniesienia_koszt_produkcji);
-#subject to ogr_z_przez_niedobor_z_krokiem {p in PRODUKTY}: z_niedobor[p] <= beta * lambda_niedobor[p] * odl_niedobor[p];
+subject to ogr_z_przez_koszty_z_krokiem: z_koszty <= beta * lambda_koszt * (koszt - odniesienia_koszt_produkcji);
+subject to ogr_z_przez_niedobor_z_krokiem {p in PRODUKTY}: z_niedobor[p] <= beta * lambda_niedobor[p] * odl_niedobor[p];
 subject to ogr_z_przez_koszty: z_koszty <= lambda_koszt * (koszt - odniesienia_koszt_produkcji);
 subject to ogr_z_przez_niedobor {p in PRODUKTY}: z_niedobor[p] <= lambda_niedobor[p] * odl_niedobor[p];
 
-maximize f_celu: odl;
+#	###################
+# 	wyliczenie zysku
+subject to licz_zysk: zysk = przychod - koszt;
 
-##################################################################################################
-# DODATKOWA FUNKCJA CELU
-##################################################################################################
-
-#maximize max_koszt: koszt;
 
 ##################################################################################################
 # FUNKCJA CELU
 ##################################################################################################
 
-var zysk;
-subject to licz_zysk: zysk = przychod - koszt;
 #maximize total_zysk: przychod - koszt;
+#maximize max_koszt: koszt;
+
+maximize f_celu: odl;
 
 ##################################################################################################
 # KONFIGIURACJA
@@ -210,4 +213,5 @@ display odl_niedobor;
 display odl;
 display z_niedobor;
 display z_koszty;
+display f_celu;
 ##################################################################################################

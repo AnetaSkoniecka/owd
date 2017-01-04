@@ -42,16 +42,16 @@ D3	0.3	0.7
 param uwodornienia_przepustowosc := 7533;
 
 param mozliwosc_produkcji_p_z_d:
-	P1 		P2		P3 	:=
-D1	9999999	0		9999999
-D2	0		9999999	0
-D3	0		9999999	0
+	P1 			P2			P3 	:=
+D1	99999999	0			99999999
+D2	0			99999999	0
+D3	0			99999999	0
 ;
 
 param mozliwosc_produkcji_p_z_k:
-	P1 		P2	P3 	:=
-K1	9999999	0	9999999
-K2	9999999	0	9999999
+	P1 			P2	P3 	:=
+K1	99999999	0	99999999
+K2	99999999	0	99999999
 ;
 
 param cena_sprzedazy_produktu_p :=
@@ -64,12 +64,12 @@ param cena_pracy_uwodornienia := 11000;
 
 param minimalne_zamowienie := 1717;
 
-param odniesienia_koszt_produkcji := 747595;
+param odniesienia_koszt_produkcji := 1110000;
 
 param odniesienia_wzgledny_niedobor :=
 P1	0
-P2	0
-P3	0
+P2	0.5
+P3	0.5
 ;
 
 param max_koszt = 1959130;
