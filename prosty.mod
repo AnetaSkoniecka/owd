@@ -27,17 +27,17 @@ param odniesienia_koszt_produkcji;
 param odniesienia_wzgledny_niedobor {p in PRODUKTY};
 param max_koszt;
 
-var wykorzystanie_s {s in SUROWCE} integer >= 0;
-var wykorzystanie_s_ilosc {s in SUROWCE, i in ILOSC} integer >= 0;
+var wykorzystanie_s {s in SUROWCE} >= 0;
+var wykorzystanie_s_ilosc {s in SUROWCE, i in ILOSC} >= 0;
 var uzycie_s2 {1..2} binary;
-var koszt_wykorzystania_s {s in SUROWCE} integer >= 0;
-var wytworzone_polprodukty_d {d in POLPRODUKTY_D} integer >= 0;
-var wytworzone_polprodukty_d_na_k {d in POLPRODUKTY_D} integer >= 0;
-var wytworzone_polprodukty_d_na_p {d in POLPRODUKTY_D} integer >= 0;
-var wytworzone_polprodukty_k {k in POLPRODUKTY_K} integer >= 0;
-var wykorzystanie_polproduktu_k_na_p {k in POLPRODUKTY_K, p in PRODUKTY} integer >= 0;
-var wykorzystanie_polproduktu_d_na_p {d in POLPRODUKTY_D, p in PRODUKTY} integer >= 0;
-var wytworzone_produkty {p in PRODUKTY} integer >= 0;
+var koszt_wykorzystania_s {s in SUROWCE} >= 0;
+var wytworzone_polprodukty_d {d in POLPRODUKTY_D} >= 0;
+var wytworzone_polprodukty_d_na_k {d in POLPRODUKTY_D} >= 0;
+var wytworzone_polprodukty_d_na_p {d in POLPRODUKTY_D} >= 0;
+var wytworzone_polprodukty_k {k in POLPRODUKTY_K} >= 0;
+var wykorzystanie_polproduktu_k_na_p {k in POLPRODUKTY_K, p in PRODUKTY} >= 0;
+var wykorzystanie_polproduktu_d_na_p {d in POLPRODUKTY_D, p in PRODUKTY} >= 0;
+var wytworzone_produkty {p in PRODUKTY} >= 0;
 var koszt_uwodornienia >= 0;
 var uwodornienie_pracuje binary;
 var koszt >= 0;
@@ -130,9 +130,11 @@ subject to licz_przychod: przychod = sum {p in PRODUKTY} wytworzone_produkty[p] 
 
 #	###################
 # 	wyliczenie kosztu uwodornienia
-subject to licz_koszt_uwodornienia: koszt_uwodornienia >= cena_pracy_uwodornienia * uwodornienie_pracuje;
-subject to kiedy_uwodornienie_pracuje: 9999999 * uwodornienie_pracuje >= (sum {d in POLPRODUKTY_D}
-wytworzone_polprodukty_d_na_k[d]); 
+subject to licz_koszt_uwodornienia: koszt_uwodornienia = cena_pracy_uwodornienia * uwodornienie_pracuje;
+#subject to kiedy_uwodornienie_pracuje: 9999999 * uwodornienie_pracuje >= (sum {d in POLPRODUKTY_D}
+#wytworzone_polprodukty_d_na_k[d]); 
+subject to kiedy_uwodornienie_pracuje2: uwodornienie_pracuje <= (sum {d in POLPRODUKTY_D}
+wytworzone_polprodukty_d_na_k[d]) * 99999999;
 
 #	###################
 # 	jakie koszta calkowite
@@ -151,15 +153,15 @@ subject to licz_koszt_calkowity: koszt =
 # 	odleglosci od pkt aspiracji
 subject to licz_odl_koszt: odl_koszt = koszt - odniesienia_koszt_produkcji;
 subject to licz_odl_niedobor {p in PRODUKTY}: odl_niedobor[p] = 
-	(minimalne_zamowienie - wytworzone_produkty[p])/minimalne_zamowienie - odniesienia_wzgledny_niedobor[p];
+	((minimalne_zamowienie - wytworzone_produkty[p])/minimalne_zamowienie) - odniesienia_wzgledny_niedobor[p];
 
 #	###################
 # 	model do pkt odniesienia
-subject to licz_odl: odl = v + epsilon * ((sum {p in PRODUKTY} z_niedobor[p]) + z_koszty);
+subject to licz_odl: odl = v; # + 0.0000001 * ((sum {p in PRODUKTY} z_niedobor[p]) + z_koszty);
 subject to ogr_v_przez_z_koszty: v <= z_koszty;
 subject to ogr_v_przez_z_niedobory {p in PRODUKTY}: v <= z_niedobor[p];
-subject to ogr_z_przez_koszty_z_krokiem: z_koszty <= beta * lambda_koszt * (koszt - odniesienia_koszt_produkcji);
-subject to ogr_z_przez_niedobor_z_krokiem {p in PRODUKTY}: z_niedobor[p] <= beta * lambda_niedobor[p] * odl_niedobor[p];
+#subject to ogr_z_przez_koszty_z_krokiem: z_koszty <= beta * lambda_koszt * (koszt - odniesienia_koszt_produkcji);
+#subject to ogr_z_przez_niedobor_z_krokiem {p in PRODUKTY}: z_niedobor[p] <= beta * lambda_niedobor[p] * odl_niedobor[p];
 subject to ogr_z_przez_koszty: z_koszty <= lambda_koszt * (koszt - odniesienia_koszt_produkcji);
 subject to ogr_z_przez_niedobor {p in PRODUKTY}: z_niedobor[p] <= lambda_niedobor[p] * odl_niedobor[p];
 
@@ -206,4 +208,6 @@ display koszt_uwodornienia;
 display odl_koszt;
 display odl_niedobor;
 display odl;
+display z_niedobor;
+display z_koszty;
 ##################################################################################################
