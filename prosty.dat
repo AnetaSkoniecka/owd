@@ -64,15 +64,15 @@ param cena_pracy_uwodornienia := 11000;
 
 param minimalne_zamowienie := 1717;
 
-param odniesienia_koszt_produkcji := 1110000;
+param odniesienia_koszt_produkcji := 700757;
 
 param odniesienia_wzgledny_niedobor :=
 P1	0
-P2	0.5
-P3	0.5
+P2	0
+P3	0
 ;
 
-param max_koszt = 1959130;
+param max_koszt = 1939140;
 
 param lambda_koszt = 0.00000005; #-1 / 1959130;
 
@@ -84,4 +84,4 @@ P3	1
 
 param epsilon = 0.0001;
 
-param beta = 1;
+param beta = 0.001;

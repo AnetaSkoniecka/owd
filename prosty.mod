@@ -79,10 +79,10 @@ subject to limit5_s1: wykorzystanie_s_ilosc['S1','I3'] <= 99999999 * uzycie_s1[2
 
 #	###################
 # 	warunki podzialu kosztow surowca dla S2
-subject to limit1_s2: limity['S2', 'I1'] * uzycie_s2[1] <= wykorzystanie_s_ilosc['S2','I1'];
 subject to limit2_s2: wykorzystanie_s_ilosc['S2','I1'] <= limity['S2', 'I1'];
-subject to limit3_s2: (limity['S2', 'I2'] - limity['S2', 'I1']) * uzycie_s2[2] <= wykorzystanie_s_ilosc['S2','I2'];
 subject to limit4_s2: wykorzystanie_s_ilosc['S2','I2'] <= (limity['S2', 'I2'] - limity['S2', 'I1']) * uzycie_s2[1];
+subject to limit1_s2: limity['S2', 'I1'] * uzycie_s2[1] <= wykorzystanie_s_ilosc['S2','I1'];
+subject to limit3_s2: (limity['S2', 'I2'] - limity['S2', 'I1']) * uzycie_s2[2] <= wykorzystanie_s_ilosc['S2','I2'];
 subject to limit5_s2: wykorzystanie_s_ilosc['S2','I3'] <= 99999999 * uzycie_s2[2];
 
 #	################### *****
@@ -152,20 +152,20 @@ subject to licz_koszt_calkowity: koszt =
 #	###################
 #	WYLACZONE
 # 	minimalnie trzeba tyle wyprodukowac (uwaga to potem bedzie kryterium a nie ograniczenie)
-#subject to minm_zamowienie {p in PRODUKTY}: wytworzone_produkty[p] >= minimalne_zamowienie;
+subject to minm_zamowienie {p in PRODUKTY}: wytworzone_produkty[p] >= minimalne_zamowienie;
 
 #	###################
 # 	odleglosci od pkt aspiracji
 subject to licz_odl_koszt: odl_koszt = koszt - odniesienia_koszt_produkcji;
 subject to licz_odl_niedobor {p in PRODUKTY}: odl_niedobor[p] = 
-	((minimalne_zamowienie - wytworzone_produkty[p])/minimalne_zamowienie) - odniesienia_wzgledny_niedobor[p];
+	(1 - ((minimalne_zamowienie - wytworzone_produkty[p])/minimalne_zamowienie)) - (1 - odniesienia_wzgledny_niedobor[p]);
 
 #	###################
 # 	model do pkt odniesienia
 subject to licz_odl: odl = v + 0.0000001 * ((sum {p in PRODUKTY} z_niedobor[p]) + z_koszty);
 subject to ogr_v_przez_z_koszty: v <= z_koszty;
 subject to ogr_v_przez_z_niedobory {p in PRODUKTY}: v <= z_niedobor[p];
-subject to ogr_z_przez_koszty_z_krokiem: z_koszty <= beta * lambda_koszt * (koszt - odniesienia_koszt_produkcji);
+subject to ogr_z_przez_koszty_z_krokiem: z_koszty <= beta * lambda_koszt * ((max_koszt - koszt) - (max_koszt - odniesienia_koszt_produkcji));
 subject to ogr_z_przez_niedobor_z_krokiem {p in PRODUKTY}: z_niedobor[p] <= beta * lambda_niedobor[p] * odl_niedobor[p];
 subject to ogr_z_przez_koszty: z_koszty <= lambda_koszt * (koszt - odniesienia_koszt_produkcji);
 subject to ogr_z_przez_niedobor {p in PRODUKTY}: z_niedobor[p] <= lambda_niedobor[p] * odl_niedobor[p];
@@ -183,6 +183,7 @@ subject to licz_zysk: zysk = przychod - koszt;
 #maximize max_koszt: koszt;
 
 maximize f_celu: odl;
+#minimize f_celu: koszt;
 
 ##################################################################################################
 # KONFIGIURACJA
@@ -193,7 +194,6 @@ option solver cplex;
 solve;
 
 display koszt_wykorzystania_s;
-display wykorzystanie_s;
 display wykorzystanie_s_ilosc;
 display wytworzone_polprodukty_d;
 display wytworzone_polprodukty_d_na_k;
@@ -201,6 +201,7 @@ display wytworzone_polprodukty_d_na_p;
 display wytworzone_polprodukty_k;
 display wykorzystanie_polproduktu_k_na_p;
 display wykorzystanie_polproduktu_d_na_p;
+display wykorzystanie_s;
 display wytworzone_produkty;
 display zysk;
 display przychod;
