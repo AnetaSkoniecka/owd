@@ -152,7 +152,7 @@ subject to licz_koszt_calkowity: koszt =
 #	###################
 #	WYLACZONE
 # 	minimalnie trzeba tyle wyprodukowac (uwaga to potem bedzie kryterium a nie ograniczenie)
-subject to minm_zamowienie {p in PRODUKTY}: wytworzone_produkty[p] >= minimalne_zamowienie;
+#subject to minm_zamowienie {p in PRODUKTY}: wytworzone_produkty[p] >= minimalne_zamowienie;
 
 #	###################
 # 	odleglosci od pkt aspiracji
@@ -162,12 +162,12 @@ subject to licz_odl_niedobor {p in PRODUKTY}: odl_niedobor[p] =
 
 #	###################
 # 	model do pkt odniesienia
-subject to licz_odl: odl = v + 0.0000001 * ((sum {p in PRODUKTY} z_niedobor[p]) + z_koszty);
+subject to licz_odl: odl = v + epsilon * ((sum {p in PRODUKTY} z_niedobor[p]) + z_koszty);
 subject to ogr_v_przez_z_koszty: v <= z_koszty;
 subject to ogr_v_przez_z_niedobory {p in PRODUKTY}: v <= z_niedobor[p];
 subject to ogr_z_przez_koszty_z_krokiem: z_koszty <= beta * lambda_koszt * ((max_koszt - koszt) - (max_koszt - odniesienia_koszt_produkcji));
 subject to ogr_z_przez_niedobor_z_krokiem {p in PRODUKTY}: z_niedobor[p] <= beta * lambda_niedobor[p] * odl_niedobor[p];
-subject to ogr_z_przez_koszty: z_koszty <= lambda_koszt * (koszt - odniesienia_koszt_produkcji);
+subject to ogr_z_przez_koszty: z_koszty <= lambda_koszt * ((max_koszt - koszt) - (max_koszt - odniesienia_koszt_produkcji));
 subject to ogr_z_przez_niedobor {p in PRODUKTY}: z_niedobor[p] <= lambda_niedobor[p] * odl_niedobor[p];
 
 #	###################
